@@ -99,7 +99,7 @@ def win_with_pitcher(awayScore, homeScore, inning, side, pitcherTeam):
             # print(awayScore, homeScore, inning, side)
             return True, awayScore, homeScore, inning, side
         else:
-            # print('No win')
+    # print('No win')
             return False
 
 # Finds the WPA added by our 9 ERA reliever
@@ -131,10 +131,7 @@ with open('GL2019.csv') as csv_file:
             (awayInnings, homeInnings) = [generate_inninglist(x) for x in (awayLinescore, homeLinescore)]
 
 
-            if selected_team == 'ALL':
-                teams = ( AWAY, HOME)
-            else:
-                teams = (pitcher_team(awayTeam, homeTeam, selected_team))
+            teams = (AWAY, HOME) if selected_team == 'ALL' else (pitcher_team(awayTeam, homeTeam, selected_team))
             for team in teams:
                 st = score_tally(awayInnings, homeInnings,team)
                 if st != False:
