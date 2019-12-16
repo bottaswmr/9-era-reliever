@@ -14,52 +14,29 @@ def pitcher_team(awayTeam, homeTeam, teamCode):
 
 # Returns lists of scores in each inning using the linescores from Retrosheet's game logs. The home team
 # not batting in the bottom of the last inning is represented as a 0, not an 'x'
-def generate_inninglist(linescore, isHome):
+def generate_inninglist(linescore):
     ddInning = False
     ddInningScore = ''
     Innings = []
-    if isHome == False:
-        for inning in awayLinescore:
-            if ddInning == 'val1':
-                ddInningScore = ddInningScore + inning
-                ddInning = 'val2'
-            elif ddInning == 'val2':
-                ddInningScore = ddInningScore + inning
-                ddInning = False
-                Innings.append(int(ddInningScore))
-                ddInningScore = ''
-            elif inning == '(':
-                ddInning = 'val1'
-            elif inning == ')':
-                continue
-            elif inning == 'x':
-                continue
-            else:
-                Innings.append(int(inning))
-    else: 
-        for inning in homeLinescore:
-            if ddInning == 'val1':
-                ddInningScore = ddInningScore + inning
-                ddInning = 'val2'
-
-            elif ddInning == 'val2':
-                ddInningScore = ddInningScore + inning
-                ddInning = False
-                Innings.append(int(ddInningScore))
-                ddInningScore = ''
-
-            elif inning == '(':
-                ddInning = 'val1'
-
-            elif inning == ')':
-                continue
-
-            elif inning == 'x':
-                Innings.append(0)
-
-            else:
-                Innings.append(int(inning))
-
+    for inning in linescore:
+        if ddInning == 'val1':
+            ddInningScore = ddInningScore + inning
+            ddInning = 'val2'
+        elif ddInning == 'val2':
+            ddInningScore = ddInningScore + inning
+            ddInning = False
+            Innings.append(int(ddInningScore))
+            ddInningScore = ''
+        elif inning == '(':
+            ddInning = 'val1'
+        elif inning == ')':
+            continue
+        elif inning == 'x':
+            Innings.append(0)
+            
+            continue
+        else:
+            Innings.append(int(inning))
     return Innings
 
 # Implemented rather poorly. 
@@ -126,15 +103,8 @@ def win_with_pitcher(awayScore, homeScore, inning, side, pitcherTeam):
 def find_WPA(st):
     (awayScore, homeScore, inning, side, pitcherTeam) = st
     probCalc = WinExp.WinExpCalculator(4.5, .525)
-    if side == 'top':
-        side = 0
-    elif side == 'bottom':
-        side = 1
-    prob = probCalc.getWinPct(1,(homeScore - awayScore),inning,0,side)
-    if pitcherTeam == 'a':
-        return prob
-    elif pitcherTeam == 'h':
-        return (1 - prob)
+    prob = probCalc.getWinPct(1,(homeScore - awayScore),inning,0, (side=='bottom'))
+    return (prob if (pitcherTeam == 'a') else (1 - prob))
 
 WPA = 0
 
@@ -143,7 +113,7 @@ def log_score_tally(st):
             
 # Specify the team you want, or 'ALL' for all teams
 selected_team = 'ALL'
-selected_team = 'SFN'
+selected_team = 'HOU'
 
 with open('GL2019.csv') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
@@ -155,8 +125,8 @@ with open('GL2019.csv') as csv_file:
             homeLinescore = row[20]
             games +=1 
 
-            awayInnings = generate_inninglist(awayLinescore, False)
-            homeInnings = generate_inninglist(homeLinescore, True)
+            awayInnings = generate_inninglist(awayLinescore)
+            homeInnings = generate_inninglist(homeLinescore)
 
 
             if selected_team != 'ALL':
