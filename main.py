@@ -112,8 +112,8 @@ def log_score_tally(st):
     print((st, find_WPA(st)))
             
 # Specify the team you want, or 'ALL' for all teams
-selected_team = 'ALL'
-selected_team = 'HOU'
+#selected_team = 'ALL'
+selected_team = 'SDN'
 
 with open('GL2019.csv') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
@@ -125,25 +125,18 @@ with open('GL2019.csv') as csv_file:
             homeLinescore = row[20]
             games +=1 
 
-            awayInnings = generate_inninglist(awayLinescore)
-            homeInnings = generate_inninglist(homeLinescore)
+            (awayInnings, homeInnings) = [generate_inninglist(x) for x in (awayLinescore, homeLinescore)]
 
 
-            if selected_team != 'ALL':
-                st = score_tally(awayInnings, homeInnings, pitcher_team(awayTeam, homeTeam,selected_team))
+            if selected_team == 'ALL':
+                teams = ('a', 'h')
+            else:
+                teams = (pitcher_team(awayTeam, homeTeam, selected_team))
+            for team in teams:
+                st = score_tally(awayInnings, homeInnings,team)
                 if st != False:
                     log_score_tally(st)
                     WPA += find_WPA(st)
-
-            # The block below calculates potential WPA for all teams in all games. To get an  estimate for WPA/162,
-            # divide total WPA by 30.
-
-            else:
-                for team in ('a', 'h'):
-                    st = score_tally(awayInnings, homeInnings,team)
-                    if st != False:
-                        log_score_tally(st)
-                        WPA += find_WPA(st)
         print('****************')
         print(games, 'games')
         print('WPA:', WPA)
