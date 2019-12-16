@@ -148,26 +148,32 @@ with open('GL2019.csv') as csv_file:
             homeLinescore = row[20]
             games +=1 
 
-            # The block below calculates potential WPA for an individual team
+            awayInnings, homeInnings = generate_inninglists(awayLinescore, homeLinescore)
+
+            
+            # Specify the team you want, or 'ALL' for all teams
+            selected_team = 'ALL'
+
             # awayInnings, homeInnings = generate_inninglists(awayLinescore, homeLinescore)
-            # st = score_tally(awayInnings, homeInnings, pitcher_team(awayTeam, homeTeam, 'ARI'))
-            # if st != False:
-            #     print(find_WPA(st[0], st[1], st[2], st[3], st[4]))
-            #     WPA += find_WPA(st[0], st[1], st[2], st[3], st[4])
+            if selected_team != 'ALL':
+                st = score_tally(awayInnings, homeInnings, pitcher_team(awayTeam, homeTeam,selected_team))
+                if st != False:
+                    print(find_WPA(st[0], st[1], st[2], st[3], st[4]))
+                    WPA += find_WPA(st[0], st[1], st[2], st[3], st[4])
 
             # The block below calculates potential WPA for all teams in all games. To get an  estimate for WPA/162,
             # divide total WPA by 30.
 
-            awayInnings, homeInnings = generate_inninglists(awayLinescore, homeLinescore)
-            st = score_tally(awayInnings, homeInnings, 'a')
-            if st != False:
-                print(find_WPA(st[0], st[1], st[2], st[3], st[4]))
-                WPA += find_WPA(st[0], st[1], st[2], st[3], st[4])
+            else:
+                st = score_tally(awayInnings, homeInnings, 'a')
+                if st != False:
+                    print(find_WPA(st[0], st[1], st[2], st[3], st[4]))
+                    WPA += find_WPA(st[0], st[1], st[2], st[3], st[4])
 
-            st = score_tally(awayInnings, homeInnings, 'h')
-            if st != False:
-                print(find_WPA(st[0], st[1], st[2], st[3], st[4]))
-                WPA += find_WPA(st[0], st[1], st[2], st[3], st[4])
+                st = score_tally(awayInnings, homeInnings, 'h')
+                if st != False:
+                    print(find_WPA(st[0], st[1], st[2], st[3], st[4]))
+                    WPA += find_WPA(st[0], st[1], st[2], st[3], st[4])
         print('****************')
         print(games, 'games')
         print('WPA:', WPA)
