@@ -2,13 +2,16 @@ import csv
 import itertools
 import WinExp
 
+HOME='h'
+AWAY='a'
+
 # Takes 3-letter codes for away, home, and desired team. Returns 'a' if the desired team is the away team,
 # 'h' if it's the home team, and 'x' if it's neither.
 def pitcher_team(awayTeam, homeTeam, teamCode):
     if teamCode == awayTeam:
-        return 'a'
+        return AWAY
     if teamCode == homeTeam:
-        return 'h'
+        return HOME
     else:
         return 'x'
 
@@ -69,7 +72,7 @@ def score_tally(awayInnings, homeInnings, pitcherTeam):
 # Checks whether the pitcher, giving up exactly 1 run per inning, can win the game for his team. Returns either False
 # if the pitcher cannot win, or the situation in which he can win.
 def win_with_pitcher(awayScore, homeScore, inning, side, pitcherTeam):
-    if pitcherTeam == 'a':
+    if pitcherTeam == AWAY:
         if inning >= 9:
             if (awayScore - homeScore) >= 2:
                 # print(awayScore, homeScore, inning, side)
@@ -84,7 +87,7 @@ def win_with_pitcher(awayScore, homeScore, inning, side, pitcherTeam):
             # print('No win')
             return False
 
-    elif pitcherTeam == 'h':
+    elif pitcherTeam == HOME:
         if inning >= 9:
             if (homeScore - awayScore) >= 2:
                 # print(awayScore, homeScore, inning, side)
@@ -104,7 +107,7 @@ def find_WPA(st):
     (awayScore, homeScore, inning, side, pitcherTeam) = st
     probCalc = WinExp.WinExpCalculator(4.5, .525)
     prob = probCalc.getWinPct(1,(homeScore - awayScore),inning,0, (side=='bottom'))
-    return (prob if (pitcherTeam == 'a') else (1 - prob))
+    return (prob if (pitcherTeam == AWAY) else (1 - prob))
 
 WPA = 0
 
@@ -129,7 +132,7 @@ with open('GL2019.csv') as csv_file:
 
 
             if selected_team == 'ALL':
-                teams = ('a', 'h')
+                teams = ( AWAY, HOME)
             else:
                 teams = (pitcher_team(awayTeam, homeTeam, selected_team))
             for team in teams:
