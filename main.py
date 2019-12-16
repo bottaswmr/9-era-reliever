@@ -122,7 +122,8 @@ def win_with_pitcher(awayScore, homeScore, inning, side, pitcherTeam):
             return False
 
 # Finds the WPA added by our 9 ERA reliever
-def find_WPA(awayScore, homeScore, inning, side, pitcherTeam):
+def find_WPA(st):
+    (awayScore, homeScore, inning, side, pitcherTeam) = st
     probCalc = WinExp.WinExpCalculator(4.5, .525)
     if side == 'top':
         side = 0
@@ -137,7 +138,7 @@ def find_WPA(awayScore, homeScore, inning, side, pitcherTeam):
 WPA = 0
 
 def log_score_tally(st):
-    print((st[0], st[1], st[2], st[3], st[4], find_WPA(st[0], st[1], st[2], st[3], st[4])))
+    print((st, find_WPA(st)))
             
 # Specify the team you want, or 'ALL' for all teams
 selected_team = 'ALL'
@@ -161,7 +162,7 @@ with open('GL2019.csv') as csv_file:
                 st = score_tally(awayInnings, homeInnings, pitcher_team(awayTeam, homeTeam,selected_team))
                 if st != False:
                     log_score_tally(st)
-                    WPA += find_WPA(st[0], st[1], st[2], st[3], st[4])
+                    WPA += find_WPA(st)
 
             # The block below calculates potential WPA for all teams in all games. To get an  estimate for WPA/162,
             # divide total WPA by 30.
@@ -171,7 +172,7 @@ with open('GL2019.csv') as csv_file:
                     st = score_tally(awayInnings, homeInnings,team)
                     if st != False:
                         log_score_tally(st)
-                        WPA += find_WPA(st[0], st[1], st[2], st[3], st[4])
+                        WPA += find_WPA(st)
         print('****************')
         print(games, 'games')
         print('WPA:', WPA)
