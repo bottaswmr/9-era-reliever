@@ -2,64 +2,45 @@ import csv
 import itertools
 import WinExp
 
+HOME='h'
+AWAY='a'
+
 # Takes 3-letter codes for away, home, and desired team. Returns 'a' if the desired team is the away team,
 # 'h' if it's the home team, and 'x' if it's neither.
 def pitcher_team(awayTeam, homeTeam, teamCode):
     if teamCode == awayTeam:
-        return 'a'
+        return AWAY
     if teamCode == homeTeam:
-        return 'h'
+        return HOME
     else:
         return 'x'
 
 # Returns lists of scores in each inning using the linescores from Retrosheet's game logs. The home team
 # not batting in the bottom of the last inning is represented as a 0, not an 'x'
-def generate_inninglists(awayLinescore, homeLinescore):
+def generate_inninglist(linescore):
     ddInning = False
     ddInningScore = ''
-    awayInnings = []
-    homeInnings = []  
-    for inning in awayLinescore:
+    Innings = []
+    for inning in linescore:
         if ddInning == 'val1':
             ddInningScore = ddInningScore + inning
             ddInning = 'val2'
         elif ddInning == 'val2':
             ddInningScore = ddInningScore + inning
             ddInning = False
-            awayInnings.append(int(ddInningScore))
+            Innings.append(int(ddInningScore))
             ddInningScore = ''
         elif inning == '(':
             ddInning = 'val1'
         elif inning == ')':
             continue
         elif inning == 'x':
+            Innings.append(0)
+            
             continue
         else:
-            awayInnings.append(int(inning))
-    for inning in homeLinescore:
-        if ddInning == 'val1':
-            ddInningScore = ddInningScore + inning
-            ddInning = 'val2'
-
-        elif ddInning == 'val2':
-            ddInningScore = ddInningScore + inning
-            ddInning = False
-            homeInnings.append(int(ddInningScore))
-            ddInningScore = ''
-
-        elif inning == '(':
-            ddInning = 'val1'
-
-        elif inning == ')':
-            continue
-
-        elif inning == 'x':
-            homeInnings.append(0)
-
-        else:
-            homeInnings.append(int(inning))
-
-    return awayInnings, homeInnings
+            Innings.append(int(inning))
+    return Innings
 
 # Implemented rather poorly. 
 # This takes a list of innings from each team, as well as the team that the pitcher is on. Each half inning, it uses
@@ -76,13 +57,11 @@ def score_tally(awayInnings, homeInnings, pitcherTeam):
     for (a, h) in zip(awayInnings, homeInnings):
         # print('T',inning, awayScore, homeScore)
         if win_with_pitcher(awayScore, homeScore, inning, 'top', pitcherTeam) != False:
-            print(awayScore, homeScore, 'top', inning, f'won by {pitcherTeam}')
             result = awayScore, homeScore, inning, 'top', pitcherTeam
             break
         awayScore += a
         # print('B',inning, awayScore, homeScore)
         if win_with_pitcher(awayScore, homeScore, inning, 'bottom', pitcherTeam) != False:
-            print(awayScore, homeScore, 'bottom', inning, f'won by {pitcherTeam}')
             result = awayScore, homeScore, inning, 'bottom', pitcherTeam
             break
         homeScore += h
@@ -93,7 +72,7 @@ def score_tally(awayInnings, homeInnings, pitcherTeam):
 # Checks whether the pitcher, giving up exactly 1 run per inning, can win the game for his team. Returns either False
 # if the pitcher cannot win, or the situation in which he can win.
 def win_with_pitcher(awayScore, homeScore, inning, side, pitcherTeam):
-    if pitcherTeam == 'a':
+    if pitcherTeam == AWAY:
         if inning >= 9:
             if (awayScore - homeScore) >= 2:
                 # print(awayScore, homeScore, inning, side)
@@ -108,7 +87,7 @@ def win_with_pitcher(awayScore, homeScore, inning, side, pitcherTeam):
             # print('No win')
             return False
 
-    elif pitcherTeam == 'h':
+    elif pitcherTeam == HOME:
         if inning >= 9:
             if (homeScore - awayScore) >= 2:
                 # print(awayScore, homeScore, inning, side)
@@ -120,23 +99,24 @@ def win_with_pitcher(awayScore, homeScore, inning, side, pitcherTeam):
             # print(awayScore, homeScore, inning, side)
             return True, awayScore, homeScore, inning, side
         else:
-            # print('No win')
+    # print('No win')
             return False
 
 # Finds the WPA added by our 9 ERA reliever
-def find_WPA(awayScore, homeScore, inning, side, pitcherTeam):
+def find_WPA(st):
+    (awayScore, homeScore, inning, side, pitcherTeam) = st
     probCalc = WinExp.WinExpCalculator(4.5, .525)
-    if side == 'top':
-        side = 0
-    elif side == 'bottom':
-        side = 1
-    prob = probCalc.getWinPct(1,(homeScore - awayScore),inning,0,side)
-    if pitcherTeam == 'a':
-        return prob
-    elif pitcherTeam == 'h':
-        return (1 - prob)
+    prob = probCalc.getWinPct(1,(homeScore - awayScore),inning,0, (side=='bottom'))
+    return (prob if (pitcherTeam == AWAY) else (1 - prob))
 
 WPA = 0
+
+def log_score_tally(st):
+    print((st, find_WPA(st)))
+            
+# Specify the team you want, or 'ALL' for all teams
+#selected_team = 'ALL'
+selected_team = 'SDN'
 
 with open('GL2019.csv') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
@@ -148,26 +128,15 @@ with open('GL2019.csv') as csv_file:
             homeLinescore = row[20]
             games +=1 
 
-            # The block below calculates potential WPA for an individual team
-            # awayInnings, homeInnings = generate_inninglists(awayLinescore, homeLinescore)
-            # st = score_tally(awayInnings, homeInnings, pitcher_team(awayTeam, homeTeam, 'ARI'))
-            # if st != False:
-            #     print(find_WPA(st[0], st[1], st[2], st[3], st[4]))
-            #     WPA += find_WPA(st[0], st[1], st[2], st[3], st[4])
+            (awayInnings, homeInnings) = [generate_inninglist(x) for x in (awayLinescore, homeLinescore)]
 
-            # The block below calculates potential WPA for all teams in all games. To get an  estimate for WPA/162,
-            # divide total WPA by 30.
 
-            awayInnings, homeInnings = generate_inninglists(awayLinescore, homeLinescore)
-            st = score_tally(awayInnings, homeInnings, 'a')
-            if st != False:
-                print(find_WPA(st[0], st[1], st[2], st[3], st[4]))
-                WPA += find_WPA(st[0], st[1], st[2], st[3], st[4])
-
-            st = score_tally(awayInnings, homeInnings, 'h')
-            if st != False:
-                print(find_WPA(st[0], st[1], st[2], st[3], st[4]))
-                WPA += find_WPA(st[0], st[1], st[2], st[3], st[4])
+            teams = (AWAY, HOME) if selected_team == 'ALL' else (pitcher_team(awayTeam, homeTeam, selected_team))
+            for team in teams:
+                st = score_tally(awayInnings, homeInnings,team)
+                if st != False:
+                    log_score_tally(st)
+                    WPA += find_WPA(st)
         print('****************')
         print(games, 'games')
         print('WPA:', WPA)
